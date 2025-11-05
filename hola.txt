@@ -1,0 +1,57 @@
+// Script para extraer transcripción de Microsoft Teams
+(function() {
+    // Buscar todos los elementos de transcripción
+    const transcriptItems = document.querySelectorAll('[data-tid="transcript-item"], .transcript-item, [class*="transcript"]');
+    
+    let transcription = '';
+    let timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    
+    // Intentar diferentes selectores comunes
+    const selectors = [
+        '[data-tid="transcript-item"]',
+        '.transcript-item',
+        '[role="article"]',
+        '.ts-message-list-item',
+        '.ui-chat__message'
+    ];
+    
+    let items = [];
+    for (let selector of selectors) {
+        items = document.querySelectorAll(selector);
+        if (items.length > 0) break;
+    }
+    
+    if (items.length === 0) {
+        console.warn('No se encontraron elementos de transcripción. Intenta con otro selector.');
+        console.log('Estructura del DOM:', document.body.innerHTML.substring(0, 500));
+        return;
+    }
+    
+    // Extraer texto de cada elemento
+    items.forEach((item, index) => {
+        const speaker = item.querySelector('[class*="speaker"], [class*="name"]')?.textContent || 'Desconocido';
+        const time = item.querySelector('[class*="time"], [class*="timestamp"]')?.textContent || '';
+        const text = item.textContent.trim();
+        
+        transcription += `[${time}] ${speaker}: ${text}\n\n`;
+    });
+    
+    // Si no se encontró nada, intentar extraer todo el texto visible
+    if (!transcription) {
+        transcription = document.body.innerText;
+    }
+    
+    // Crear y descargar archivo
+    const blob = new Blob([transcription], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transcripcion-teams-${timestamp}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ Transcripción descargada correctamente');
+    console.log(`Total de elementos procesados: ${items.length}`);
+})();

@@ -14,6 +14,7 @@
         '.ts-message-list-item',
         '.ui-chat__message'
     ];
+
     
     let items = [];
     for (let selector of selectors) {
